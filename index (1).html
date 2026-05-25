@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tako AI</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐙</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080810;
+    --surface: #0f0f1a;
+    --surface2: #16162a;
+    --surface3: #1e1e35;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.14);
+    --text: #ededf8;
+    --muted: rgba(237,237,248,0.4);
+    --accent: #6c5ce7;
+    --accent2: #a29bfe;
+    --accent-glow: rgba(108,92,231,0.12);
+    --green: #00cec9;
+    --amber: #fdcb6e;
+    --red: #ff7675;
+    --font: 'Syne', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 268px;
+    min-width: 268px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .logo {
+    padding: 22px 20px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    font-size: 26px;
+    line-height: 1;
+  }
+
+  .logo-wordmark {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--accent2), var(--text));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-version {
+    margin-left: auto;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  .sidebar-top {
+    padding: 16px 16px 8px;
+  }
+
+  .new-chat-btn {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    letter-spacing: 0.2px;
+  }
+
+  .new-chat-btn:hover { background: var(--accent2); color: var(--bg); }
+
+  .section-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--muted);
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    padding: 14px 16px 8px;
+  }
+
+  .skills-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px;
+  }
+
+  .skills-list::-webkit-scrollbar { width: 3px; }
+  .skills-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .skill-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .skill-card:hover { border-color: var(--border2); }
+  .skill-card.active { border-color: rgba(108,92,231,0.5); background: var(--accent-glow); }
+
+  .skill-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+    padding-right: 36px;
+  }
+
+  .skill-emoji { font-size: 15px; }
+  .skill-name { font-size: 12px; font-weight: 700; }
+  .skill-desc { font-size: 11px; color: var(--muted); line-height: 1.45; padding-right: 36px; }
+
+  .skill-toggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 30px;
+    height: 17px;
+    background: var(--border2);
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all 0.25s;
+    flex-shrink: 0;
+  }
+
+  .skill-toggle.on { background: var(--accent); }
+
+  .skill-toggle::after {
+    content: '';
+    position: absolute;
+    width: 13px;
+    height: 13px;
+    background: white;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: all 0.25s;
+  }
+
+  .skill-toggle.on::after { left: 15px; }
+
+  .add-skill-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px dashed var(--border2);
+    border-radius: 10px;
+    padding: 10px;
+    color: var(--muted);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 16px;
+    transition: all 0.2s;
+  }
+
+  .add-skill-btn:hover { border-color: var(--accent); color: var(--accent2); }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .topbar {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+  }
+
+  .model-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tier-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s;
+  }
+
+  .tier-dot.trivial { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .tier-dot.medium { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .tier-dot.heavy { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+  .model-label {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--muted);
+  }
+
+  .clear-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .clear-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* MESSAGES */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 28px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* WELCOME */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 14px;
+    padding: 60px 40px;
+    flex: 1;
+  }
+
+  .welcome-octopus { font-size: 60px; margin-bottom: 6px; }
+
+  .welcome h1 {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, var(--text), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .welcome-sub {
+    color: var(--muted);
+    font-size: 14px;
+    max-width: 380px;
+    line-height: 1.7;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font);
+  }
+
+  .chip:hover { border-color: var(--accent); color: var(--accent2); transform: translateY(-1px); }
+
+  /* MESSAGES */
+  .message {
+    display: flex;
+    gap: 12px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .avatar.ai {
+    background: var(--accent-glow);
+    border: 1px solid rgba(108,92,231,0.3);
+    font-size: 18px;
+  }
+
+  .avatar.user {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    font-size: 13px;
+    font-family: var(--mono);
+    color: var(--muted);
+  }
+
+  .bubble-wrap { display: flex; flex-direction: column; gap: 6px; max-width: 72%; }
+  .message.user .bubble-wrap { align-items: flex-end; }
+
+  .bubble {
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.75;
+    word-break: break-word;
+  }
+
+  .message.ai .bubble {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+    color: var(--text);
+  }
+
+  .message.user .bubble {
+    background: var(--accent);
+    border-top-right-radius: 4px;
+    color: white;
+  }
+
+  .meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .meta-tag {
+    font-size: 10px;
+    font-family: var(--mono);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+  }
+
+  .meta-tag.trivial { color: var(--green); border-color: rgba(0,206,201,0.25); background: rgba(0,206,201,0.08); }
+  .meta-tag.medium { color: var(--amber); border-color: rgba(253,203,110,0.25); background: rgba(253,203,110,0.08); }
+  .meta-tag.heavy { color: var(--red); border-color: rgba(255,118,117,0.25); background: rgba(255,118,117,0.08); }
+
+  /* TYPING */
+  .typing-dots {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 6px 2px;
+  }
+
+  .typing-dots span {
+    width: 7px;
+    height: 7px;
+    background: var(--muted);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-7px); opacity: 1; }
+  }
+
+  /* INPUT */
+  .input-area {
+    padding: 14px 24px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .input-box {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .input-box:focus-within { border-color: var(--accent); }
+
+  .input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 12px 14px 10px;
+  }
+
+  textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    resize: none;
+    max-height: 130px;
+    line-height: 1.65;
+  }
+
+  textarea::placeholder { color: var(--muted); }
+
+  .send-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .send-btn:hover { background: var(--accent2); transform: scale(1.05); }
+  .send-btn:disabled { background: var(--surface3); cursor: not-allowed; transform: none; opacity: 0.5; }
+
+  .input-footer {
+    padding: 8px 14px 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .active-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .active-tag {
+    font-size: 11px;
+    font-family: var(--mono);
+    background: var(--accent-glow);
+    color: var(--accent2);
+    border: 1px solid rgba(108,92,231,0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .hint {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+  }
+
+  /* MODAL */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-bg.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 18px;
+    padding: 28px;
+    width: 440px;
+    max-width: 92vw;
+    animation: modalIn 0.25s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal h2 { font-size: 20px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.5px; }
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
+  .field-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .emoji-grid {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .emoji-opt {
+    width: 38px;
+    height: 38px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.15s;
+  }
+
+  .emoji-opt:hover { border-color: var(--border2); }
+  .emoji-opt.sel { border-color: var(--accent); background: var(--accent-glow); }
+
+  .modal input, .modal textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 13px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .modal input:focus, .modal textarea:focus { border-color: var(--accent); }
+  .modal textarea { resize: none; height: 80px; line-height: 1.6; }
+
+  .modal-btns {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    border-radius: 10px;
+    padding: 9px 18px;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-cancel:hover { color: var(--text); border-color: var(--text); }
+
+  .btn-add {
+    background: var(--accent);
+    border: none;
+    color: white;
+    border-radius: 10px;
+    padding: 9px 20px;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-add:hover { background: var(--accent2); color: var(--bg); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">
+    <span class="logo-icon">🐙</span>
+    <span class="logo-wordmark">Tako</span>
+    <span class="logo-version">v1.0</span>
+  </div>
+
+  <div class="sidebar-top">
+    <button class="new-chat-btn" onclick="newChat()">
+      + &nbsp;New chat
+    </button>
+  </div>
+
+  <div class="section-label">Skills</div>
+  <div class="skills-list" id="skillsList"></div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="model-info">
+      <div class="tier-dot" id="tierDot"></div>
+      <span class="model-label" id="modelLabel">Auto-routing active</span>
+    </div>
+    <button class="clear-btn" onclick="newChat()">Clear chat</button>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <div class="welcome-octopus">🐙</div>
+      <h1>Tako AI</h1>
+      <p class="welcome-sub">Multi-model AI that routes your questions to the right model automatically. Simple things go to Gemini. Complex things go to NVIDIA.</p>
+      <div class="chips">
+        <div class="chip" onclick="chip('Hey! What can you do?')">👋 What can you do?</div>
+        <div class="chip" onclick="chip('Write a Python function to reverse a string')">🐍 Write code</div>
+        <div class="chip" onclick="chip('Design a scalable microservices architecture for an e-commerce platform')">🏗 System design</div>
+        <div class="chip" onclick="chip('Explain how neural networks learn')">🧠 Explain something</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-box">
+      <div class="input-row">
+        <textarea id="prompt" placeholder="Ask Tako anything..." rows="1"
+          onkeydown="handleKey(event)"
+          oninput="resize(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="send()">↑</button>
+      </div>
+      <div class="input-footer">
+        <div class="active-tags" id="activeTags"></div>
+        <span class="hint">Enter to send · Shift+Enter for newline</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SKILL MODAL -->
+<div class="modal-bg" id="modalBg" onclick="closeModal(event)">
+  <div class="modal">
+    <h2>Add a skill 🎯</h2>
+    <p class="modal-sub">Skills add persistent instructions to every message. Toggle them on or off anytime.</p>
+
+    <div class="field-label">Icon</div>
+    <div class="emoji-grid" id="emojiGrid">
+      <div class="emoji-opt sel" data-e="🎯">🎯</div>
+      <div class="emoji-opt" data-e="💻">💻</div>
+      <div class="emoji-opt" data-e="✍️">✍️</div>
+      <div class="emoji-opt" data-e="📊">📊</div>
+      <div class="emoji-opt" data-e="🔬">🔬</div>
+      <div class="emoji-opt" data-e="🎨">🎨</div>
+      <div class="emoji-opt" data-e="📚">📚</div>
+      <div class="emoji-opt" data-e="⚙️">⚙️</div>
+      <div class="emoji-opt" data-e="🧠">🧠</div>
+      <div class="emoji-opt" data-e="🚀">🚀</div>
+      <div class="emoji-opt" data-e="💡">💡</div>
+      <div class="emoji-opt" data-e="🔥">🔥</div>
+    </div>
+
+    <div class="field-label">Skill name</div>
+    <input id="sName" type="text" placeholder="e.g. Code Reviewer" maxlength="28">
+
+    <div class="field-label">Instructions</div>
+    <textarea id="sDesc" placeholder="e.g. Always review my code for bugs and suggest improvements before answering"></textarea>
+
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-add" onclick="saveSkill()">Add skill</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const WEBHOOK = 'https://n8n-1-awvg.onrender.com/webhook/ai-router';
+
+let skills = [
+  { id: 1, e: '💻', name: 'Code mode', desc: 'Always write clean, well-commented code with examples', on: false },
+  { id: 2, e: '✍️', name: 'Be concise', desc: 'Keep all responses short, direct, and to the point', on: false },
+  { id: 3, e: '🎯', name: 'Step by step', desc: 'Always break explanations into clear numbered steps', on: false },
+  { id: 4, e: '🧠', name: 'ELI5 mode', desc: 'Explain everything like I am 12 years old, simply', on: false },
+];
+
+let selEmoji = '🎯';
+let loading = false;
+
+function renderSkills() {
+  const el = document.getElementById('skillsList');
+  el.innerHTML = skills.map(s => `
+    <div class="skill-card ${s.on ? 'active' : ''}" onclick="toggleSkill(${s.id})">
+      <div class="skill-header">
+        <span class="skill-emoji">${s.e}</span>
+        <span class="skill-name">${s.name}</span>
+      </div>
+      <div class="skill-desc">${s.desc}</div>
+      <div class="skill-toggle ${s.on ? 'on' : ''}" onclick="event.stopPropagation();toggleSkill(${s.id})"></div>
+    </div>
+  `).join('') + `<button class="add-skill-btn" onclick="openModal()">+ Add skill</button>`;
+
+  const active = skills.filter(s => s.on);
+  document.getElementById('activeTags').innerHTML = active.map(s =>
+    `<span class="active-tag">${s.e} ${s.name}</span>`
+  ).join('');
+}
+
+function toggleSkill(id) {
+  skills = skills.map(s => s.id === id ? {...s, on: !s.on} : s);
+  renderSkills();
+}
+
+function openModal() {
+  selEmoji = '🎯';
+  document.getElementById('sName').value = '';
+  document.getElementById('sDesc').value = '';
+  document.querySelectorAll('.emoji-opt').forEach(e => e.classList.toggle('sel', e.dataset.e === selEmoji));
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modalBg')) {
+    document.getElementById('modalBg').classList.remove('open');
+  }
+}
+
+document.querySelectorAll('.emoji-opt').forEach(el => {
+  el.addEventListener('click', () => {
+    selEmoji = el.dataset.e;
+    document.querySelectorAll('.emoji-opt').forEach(e => e.classList.toggle('sel', e === el));
+  });
+});
+
+function saveSkill() {
+  const name = document.getElementById('sName').value.trim();
+  const desc = document.getElementById('sDesc').value.trim();
+  if (!name || !desc) { document.getElementById('sName').focus(); return; }
+  skills.push({ id: Date.now(), e: selEmoji, name, desc, on: true });
+  renderSkills();
+  document.getElementById('modalBg').classList.remove('open');
+}
+
+function context() {
+  const on = skills.filter(s => s.on);
+  return on.length ? '\n\n[Instructions: ' + on.map(s => s.desc).join('. ') + ']' : '';
+}
+
+async function send() {
+  if (loading) return;
+  const inp = document.getElementById('prompt');
+  const raw = inp.value.trim();
+  if (!raw) return;
+
+  document.getElementById('welcome')?.remove();
+  addMsg('user', raw);
+  inp.value = '';
+  inp.style.height = 'auto';
+
+  const tid = addTyping();
+  loading = true;
+  document.getElementById('sendBtn').disabled = true;
+  setModel('...', '');
+
+  try {
+    const r = await fetch(WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: raw + context() })
+    });
+    const d = await r.json();
+    removeTyping(tid);
+    addMsg('ai', d.response || '(no response)', d.tier, d.model);
+    setModel(d.model || 'unknown', d.tier || '');
+  } catch {
+    removeTyping(tid);
+    addMsg('ai', '⚠️ Could not reach Tako server. Check your n8n instance is running.');
+    setModel('Error', '');
+  }
+
+  loading = false;
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function addMsg(role, text, tier, model) {
+  const msgs = document.getElementById('messages');
+  const d = document.createElement('div');
+  d.className = 'message ' + role;
+  const tierCls = tier || '';
+  const tags = role === 'ai' && (tier || model) ? `
+    <div class="meta">
+      ${tier ? `<span class="meta-tag ${tierCls}">${tier}</span>` : ''}
+      ${model ? `<span class="meta-tag">${model}</span>` : ''}
+    </div>` : '';
+  d.innerHTML = `
+    <div class="avatar ${role}">${role === 'ai' ? '🐙' : 'U'}</div>
+    <div class="bubble-wrap">
+      <div class="bubble">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>
+      ${tags}
+    </div>`;
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('messages');
+  const d = document.createElement('div');
+  d.className = 'message ai';
+  const id = 't' + Date.now();
+  d.id = id;
+  d.innerHTML = `
+    <div class="avatar ai">🐙</div>
+    <div class="bubble-wrap">
+      <div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>
+    </div>`;
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+function removeTyping(id) { document.getElementById(id)?.remove(); }
+
+function setModel(model, tier) {
+  document.getElementById('modelLabel').textContent = model;
+  const dot = document.getElementById('tierDot');
+  dot.className = 'tier-dot ' + (tier || '');
+}
+
+function chip(text) {
+  document.getElementById('prompt').value = text;
+  send();
+}
+
+function newChat() {
+  const msgs = document.getElementById('messages');
+  msgs.innerHTML = `
+    <div class="welcome" id="welcome">
+      <div class="welcome-octopus">🐙</div>
+      <h1>Tako AI</h1>
+      <p class="welcome-sub">Multi-model AI that routes your questions to the right model automatically. Simple things go to Gemini. Complex things go to NVIDIA.</p>
+      <div class="chips">
+        <div class="chip" onclick="chip('Hey! What can you do?')">👋 What can you do?</div>
+        <div class="chip" onclick="chip('Write a Python function to reverse a string')">🐍 Write code</div>
+        <div class="chip" onclick="chip('Design a scalable microservices architecture for an e-commerce platform')">🏗 System design</div>
+        <div class="chip" onclick="chip('Explain how neural networks learn')">🧠 Explain something</div>
+      </div>
+    </div>`;
+  setModel('Auto-routing active', '');
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+}
+
+function resize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+}
+
+renderSkills();
+</script>
+</body>
+</html>
